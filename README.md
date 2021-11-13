@@ -42,7 +42,7 @@ apt-get install libapache2-mod-php7.0 -y
 apt-get install ca-certificates openssl -y
 ```
 
-- untuk CLient Skypie yang akan mendaptkan alamat yang tetap yaitu 10.45.3.69 dengan konfigurasi seabagi berikut
+- untuk CLient Skypie yang akan mendaptkan alamat yang tetap yaitu `10.44.3.69` dengan konfigurasi seabagi berikut
 
 ![messageImage_1636793671122](https://user-images.githubusercontent.com/61973814/141612739-3db091ed-6812-4b6b-b0e4-90a0c1d77c7d.jpg)
 

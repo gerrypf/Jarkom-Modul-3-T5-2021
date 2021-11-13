@@ -458,7 +458,7 @@ Menambahkan konfigurasi pada `/etc/apache2/sites-available/super.franky.t05.com.
 <VirtualHost *:80>
         ServerAdmin webmaster@localhost
         DocumentRoot /var/www/super.franky.t05.com
-        ServerName super.franky.t07.com
+        ServerName super.franky.t05.com
         ErrorLog \${APACHE_LOG_DIR}/error.log
         CustomLog \${APACHE_LOG_DIR}/access.log combined
         <Directory /var/www/super.franky.t05.com/public>

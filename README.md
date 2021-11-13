@@ -14,6 +14,76 @@ Luffy yang sudah menjadi Raja Bajak Laut ingin mengembangkan daerah kekuasaannya
 Luffy bersama Zoro berencana membuat peta tersebut dengan kriteria EniesLobby sebagai DNS Server, Jipangu sebagai DHCP Server, Water7 sebagai Proxy Server (1) dan Foosha sebagai DHCP Relay (2). Luffy dan Zoro menyusun peta tersebut dengan hati-hati dan teliti.
 
 ### Jawaban
+- Membuat Topologi
+
+![image](https://user-images.githubusercontent.com/61973814/141613011-f99a1643-c0eb-4282-8f50-a05f41e9dc7a.png)
+
+***EniesLobby -> DNS Server***
+- EniesLobby sebagai DNS Server sehingga perlu melakukan install bind9
+```
+echo "nameserver 192.168.122.1" > /etc/resolv.conf
+apt-get update
+apt-get install bind9 -y
+```
+
+- dan untuk konfigurasinya seperti berikut
+![messageImage_1636793434226](https://user-images.githubusercontent.com/61973814/141612705-9a203647-7950-45f8-ba5a-d63f808dc5c7.jpg)
+
+
+
+***Skypie -> Web Server***
+Skypea sebagai Web server sehingga perlu melakukan download apache
+```
+apt-get install apache2 -y
+service apache2 start
+apt-get install php -y
+apt-get install libapache2-mod-php7.0 -y
+apt-get install ca-certificates openssl -y
+```
+
+- untuk CLient Skypie yang akan mendaptkan alamat yang tetap yaitu 10.45.3.69 dengan konfigurasi seabagi berikut
+![messageImage_1636793671122](https://user-images.githubusercontent.com/61973814/141612739-3db091ed-6812-4b6b-b0e4-90a0c1d77c7d.jpg)
+
+
+***Foosha -> DHCP Relay***
+Fosha sebagai DHCP Relay sehingga perlu melakukan install isc-dhcp-relay
+```
+apt-get update
+apt-get install isc-dhcp-relay -y
+```
+
+- untuk konfigurasi Foosha sebagai berikut
+
+![messageImage_1636793529813](https://user-images.githubusercontent.com/61973814/141612784-6dad8f86-4e71-4986-bb59-523a81449a57.jpg)
+![messageImage_1636793542724](https://user-images.githubusercontent.com/61973814/141612919-dc83af40-b779-4aa4-9432-b23443a2b9ff.jpg)
+
+***Water7 -> Proxy Server***
+Water7 Sebagai Proxy server sehingga perlu melakukan install squid
+```
+echo "nameserver 192.168.122.1" > /etc/resolv.conf
+apt-get update
+apt-get install libapache2-mod-php7.0 -y
+apt-get install squid -y
+```
+
+- untuk konfigurasi `Water7` sebagai berikut
+![image](https://user-images.githubusercontent.com/61973814/141612854-33f47685-30cc-4e1b-a380-2759f8f6af99.png)
+
+***Jipangu -> DHCP Server***
+```
+echo "nameserver 192.168.122.1" > /etc/resolv.conf
+apt-get update
+apt-get install isc-dhcp-server -y
+```
+
+- untuk konfigurasinya `Jipangu` sebagai berikut
+
+![messageImage_1636794082852](https://user-images.githubusercontent.com/61973814/141612932-e8d9bd03-e969-49fb-8251-5876dde8aafa.jpg)
+
+- Untuk Setiap Client yaitu Longuetown, Alabasta,TottoLand menggunakan konfigurasi sebagai berikut untuk penerapan DHCP
+
+![image](https://user-images.githubusercontent.com/61973814/141612972-71412975-39e0-42ad-a231-02501b5c56ba.png)
+
 
 ## Soal 3
 Semua client yang ada HARUS menggunakan konfigurasi IP dari DHCP Server. Client yang melalui Switch1 mendapatkan range IP dari [prefix IP].1.20 - [prefix IP].1.99 dan [prefix IP].1.150 - [prefix IP].1.169 (3)

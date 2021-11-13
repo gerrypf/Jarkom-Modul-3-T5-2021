@@ -90,15 +90,110 @@ Semua client yang ada HARUS menggunakan konfigurasi IP dari DHCP Server. Client 
 
 ### Jawaban
 
+Lakukan konfigurasi pada `Foosha` dengan melakukan edit file `/etc/default/isc-dhcp-relay` dengan konfigurasi berikut
+```
+# Defaults for isc-dhcp-relay initscript
+# sourced by /etc/init.d/isc-dhcp-relay
+# installed at /etc/default/isc-dhcp-relay by the maintainer scripts
+
+#
+# This is a POSIX shell fragment
+#
+
+# What servers should the DHCP relay forward requests to?
+SERVERS="10.44.2.4"
+
+# On what interfaces should the DHCP relay (dhrelay) serve DHCP requests?
+INTERFACES="eth1 eth3 eth2"
+
+# Additional options that are passed to the DHCP relay daemon?
+OPTIONS=""
+```
+
+- Lalu Konfigurasi DHCP Server pada Jipangu
+
+Membuat Jipangu menjadi DHCP Server. Karena Jipangu Terhubung dengan Fosha melalui eth0 sehingga lakukan konfigurasi pada file `/etc/default/isc-dhcp-server` sebagai berikut:
+```
+# Defaults for isc-dhcp-server initscript
+# sourced by /etc/init.d/isc-dhcp-server
+# installed at /etc/default/isc-dhcp-server by the maintainer scripts
+
+#
+# This is a POSIX shell fragment
+#
+
+# Path to dhcpd's config file (default: /etc/dhcp/dhcpd.conf).
+#DHCPD_CONF=/etc/dhcp/dhcpd.conf
+
+# Path to dhcpd's PID file (default: /var/run/dhcpd.pid).
+#DHCPD_PID=/var/run/dhcpd.pid
+
+# Additional options to start dhcpd with.
+#       Don't use options -cf or -pf here; use DHCPD_CONF/ DHCPD_PID instead
+#OPTIONS=""
+
+# On what interfaces should the DHCP server (dhcpd) serve DHCP requests?
+#       Separate multiple interfaces with spaces, e.g. "eth0 eth1".
+INTERFACES="eth0"
+```
+
+Lakukan restart DHCP server dengan `service isc-dhcp-server restart` Setelah itu lakukan konfigurasi untuk rentang IP yang akan diberikan pada file `/etc/dhcp/dhcpd.conf` dengan cara
+```
+subnet 10.44.2.0 netmask 255.255.255.0 {
+}
+subnet 10.44.1.0 netmask 255.255.255.0 {
+    range  10.44.1.20 10.44.1.99;
+    range  10.44.1.150 10.44.1.169;
+    option routers 10.44.1.1;
+    option broadcast-address 10.44.1.255;
+    option domain-name-servers 10.44.2.2;
+    default-lease-time 360;
+    max-lease-time 7200;
+}
+```
+
 ## Soal 4
 Client yang melalui Switch3 mendapatkan range IP dari [prefix IP].3.30 - [prefix IP].3.50 (4)
 
 ### Jawaban
+Lakukan konfigurasi untuk rentang IP yang akan diberikan pada file /`etc/dhcp/dhcpd.conf` dengan cara menambahkan konfigurasi berikut ini
+```
+subnet 10.44.3.0 netmask 255.255.255.0 {
+    range  10.44.3.30 10.44.3.50;
+    option routers 10.44.3.1;
+    option broadcast-address 10.44.3.255;
+    option domain-name-servers 10.44.2.2;
+    default-lease-time 720;
+    max-lease-time 7200;
+}
+```
+- Dengan begitu kita telah menentukan ip range dengan menambahkan range `10.44.3.30` `10.44.3.50` pada subnet interface `switch3` yang terhubung ke fosha pada eth3
 
 ## Soal 5
 Client mendapatkan DNS dari EniesLobby dan client dapat terhubung dengan internet melalui DNS tersebut. (5)
 
 ### Jawaban
+- Untuk client mendapatkan DNS dari EniesLobby diperlukan konfigurasi pada file `/etc/dhcp/dhcpd.conf` dengan option domain-name-servers `10.44.2.2`
+- Supaya semua client dapat terhubung internet pada `EniesLobby` diberikan konfigurasi pada `file /etc/bind/named.conf.options` dengan
+```
+options {
+        directory \"/var/cache/bind\";
+
+        forwarders {
+                8.8.8.8;
+                8.8.8.4;
+        };
+
+        // dnssec-validation auto;
+        allow-query { any; };
+        auth-nxdomain no;    # conform to RFC1035
+        listen-on-v6 { any; };
+};
+```
+
+### Testing
+Dengan mengkonfigurasi DHCP server dan DHCP Relay seleuruh Client yang berada pada subnet interface switch 1 dan switch 3 akan otomatis mendapatkan IP pada rentang yang telah dikonfigurasi. Untuk contohnya adalah sebagai berikut:
+
 
 ## Soal 6
 Lama waktu DHCP server meminjamkan alamat IP kepada Client yang melalui Switch1 selama 6 menit sedangkan pada client yang melalui Switch3 selama 12 menit. Dengan waktu maksimal yang dialokasikan untuk peminjaman alamat IP selama 120 menit. (6)

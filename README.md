@@ -27,6 +27,7 @@ apt-get install bind9 -y
 ```
 
 - dan untuk konfigurasinya seperti berikut
+
 ![messageImage_1636793434226](https://user-images.githubusercontent.com/61973814/141612705-9a203647-7950-45f8-ba5a-d63f808dc5c7.jpg)
 
 
@@ -42,6 +43,7 @@ apt-get install ca-certificates openssl -y
 ```
 
 - untuk CLient Skypie yang akan mendaptkan alamat yang tetap yaitu 10.45.3.69 dengan konfigurasi seabagi berikut
+
 ![messageImage_1636793671122](https://user-images.githubusercontent.com/61973814/141612739-3db091ed-6812-4b6b-b0e4-90a0c1d77c7d.jpg)
 
 
@@ -199,6 +201,7 @@ Alabasta
 ![image](https://user-images.githubusercontent.com/61973814/141630159-d4d38e8a-a49d-463d-a92b-186fc996a31d.png)
 
 - Testing connect ke internet
+
     ![image](https://user-images.githubusercontent.com/61973814/141633672-82ceb4c4-38da-4fd4-a5ef-83641f919f16.png)
 
 Skypie
@@ -206,6 +209,7 @@ Skypie
 ![image](https://user-images.githubusercontent.com/61973814/141630454-2fd5b108-abb8-4d60-a87c-1f9a4ac22833.png)
 
 - Testing connect ke internet
+
     ![image](https://user-images.githubusercontent.com/61973814/141634166-de7cf4d8-5f2a-478b-a441-be1532400f55.png)
 
 Loguetown
@@ -213,6 +217,7 @@ Loguetown
 ![image](https://user-images.githubusercontent.com/61973814/141630687-5a06e2e8-2fbd-4cf3-9bb6-f888e7b41fe1.png)
 
 - Testing connect ke internet
+
     ![image](https://user-images.githubusercontent.com/61973814/141632393-a923b68d-904b-488c-8185-5783cb90213b.png)
 
 TottoLand
@@ -220,6 +225,7 @@ TottoLand
 ![image](https://user-images.githubusercontent.com/61973814/141632818-80f5be26-7c64-47b2-8776-2e9a0fa6133d.png)
 
 - Testing connect ke internet
+
     ![image](https://user-images.githubusercontent.com/61973814/141633182-e19910bc-4d8b-4a62-8ab7-798a928ebfad.png)
 
 
@@ -398,7 +404,7 @@ Melakukan restart service squid dengan `service squid restart`
 
 ***TESTING***
 
-Ketika pada hari dan jam kerja maka akan bisa diakses
+- Ketika tidak pada hari dan jam kerja maka tidak akan bisa diakses
 ![image](https://user-images.githubusercontent.com/61973814/141643715-8a3b3f4c-fd8d-408e-9d37-e3a4c82243bc.png)
 
 
@@ -408,8 +414,189 @@ Ketika pada hari dan jam kerja maka akan bisa diakses
 Agar transaksi bisa lebih fokus berjalan, maka dilakukan redirect website agar mudah mengingat website transaksi jual beli kapal. Setiap mengakses google.com, akan diredirect menuju super.franky.yyy.com dengan website yang sama pada soal shift modul 2. Web server super.franky.yyy.com berada pada node Skypie (11)
 
 ### Jawaban
+- Tambahkan konfigurasi pada /etc/bind/named.conf.local di `EniesLobby`
+```
+zone \"jualbelikapal.t05.com\" {
+        type master;
+        file \"/etc/bind/jarkom/jualbelikapal.t05.com\";
+};
+
+zone \"super.franky.t05.com\" {
+        type master;
+        file \"/etc/bind/kaizoku/super.franky.t05.com\";
+};
+
+```
+- buat Directory baru dengan mkdir `/etc/bind/kaizoku/`
+- Menambahkan konfigurasi pada `/etc/bind/kaizoku/super.franky.t05.com`
+```
+\$TTL    604800
+@       IN      SOA     super.franky.t05.com. root.super.franky.t05.com. (
+                        2021100401      ; Serial
+                         604800         ; Refresh
+                          86400         ; Retry
+                        2419200         ; Expire
+                         604800 )       ; Negative Cache TTL
+;
+@       IN      NS      super.franky.t05.com.
+@       IN      A       10.44.3.69
+```
+- Melakukan restart service bind9 dengan `service bind9 restart`
+
+***Skypie***
+- Membuat Directory baru dengan mkdir `/var/www/super.franky.t05.com`
+- Mengambil konten dan melakukan unzip pada github dengan
+```
+wget https://raw.githubusercontent.com/FeinardSlim/Praktikum-Modul-2-Jarkom/main/super.franky.zip -O /root/super.franky.zip
+unzip -o /root/super.franky.zip -d  /root
+cp -r /root/super.franky/. /var/www/super.franky.t05.com/
+
+```
+
+Menambahkan konfigurasi pada `/etc/apache2/sites-available/super.franky.t05.com.conf`
+```
+<VirtualHost *:80>
+        ServerAdmin webmaster@localhost
+        DocumentRoot /var/www/super.franky.t05.com
+        ServerName super.franky.t07.com
+        ErrorLog \${APACHE_LOG_DIR}/error.log
+        CustomLog \${APACHE_LOG_DIR}/access.log combined
+        <Directory /var/www/super.franky.t05.com/public>
+                Options +Indexes
+        </Directory>
+</VirtualHost>
+```
+
+Melakukan
+```
+a2ensite super.franky.t05.com
+a2dissite 000-default  
+```
+
+***Skypie***
+
+- Tambahkan konfigurasi pada `/etc/squid/squid.conf`
+```
+include /etc/squid/acl.conf
+
+http_port 5000
+visible_hostname Water7
+#http_access allow all
+
+
+auth_param basic program /usr/lib/squid/basic_ncsa_auth /etc/squid/passwd
+auth_param basic children 5
+auth_param basic realm Proxy
+auth_param basic credentialsttl 2 hours
+auth_param basic casesensitive on
+acl USERS proxy_auth REQUIRED
+
+#client acl for the lan
+acl lan src 10.44.3.0/24 10.44.1.0/24
+
+#to deny \"google.com\"
+acl badsites dstdomain .google.com
+
+#Deny with redirect to Google SafeSearch for lan
+deny_info http://super.franky.t05.com lan
+
+#Deny badsites to lan
+http_reply_access deny badsites lan
+
+http_access allow USERS AVAILABLE_WORKING
+http_access deny all
+dns_nameservers 10.44.2.2
+```
+Melakukan restart service squid dengan `service squid restart`
+
+***TESTING***
+
+- Lakukan ping pada `super.franky.t05.com`
+
+![image](https://user-images.githubusercontent.com/61973814/141644732-de382bfc-a091-43c8-8ebe-3de5bacb178a.png)
+
+- lakukan `lynx http://google.com`
+- maka akan mengarahkan ke web `super.franky.t05.com`
+
+![image](https://user-images.githubusercontent.com/61973814/141644827-02e1b74c-249c-409e-ac40-3d2abf1fedc9.png)
 
 ## Soal 12 dan 13
 Saatnya berlayar! Luffy dan Zoro akhirnya memutuskan untuk berlayar untuk mencari harta karun di super.franky.yyy.com. Tugas pencarian dibagi menjadi dua misi, Luffy bertugas untuk mendapatkan gambar (.png, .jpg), sedangkan Zoro mendapatkan sisanya. Karena Luffy orangnya sangat teliti untuk mencari harta karun, ketika ia berhasil mendapatkan gambar, ia mendapatkan gambar dan melihatnya dengan kecepatan 10 kbps (12). Sedangkan, Zoro yang sangat bersemangat untuk mencari harta karun, sehingga kecepatan kapal Zoro tidak dibatasi ketika sudah mendapatkan harta yang diinginkannya (13)
 
 ### Jawaban
+- Tambahkan konfigurasi pada file `/etc/squid/squid.conf` water7
+```
+include /etc/squid/acl.conf
+
+http_port 5000
+visible_hostname Water7
+#http_access allow all
+
+
+auth_param basic program /usr/lib/squid/basic_ncsa_auth /etc/squid/passwd
+auth_param basic children 5
+auth_param basic realm Proxy
+auth_param basic credentialsttl 2 hours
+auth_param basic casesensitive on
+acl USERS proxy_auth REQUIRED
+
+#client acl for the lan
+acl lan src 10.44.3.0/24 10.44.1.0/24
+
+#to deny \"google.com\"
+acl badsites dstdomain .google.com
+
+#Deny with redirect to Google SafeSearch for lan
+deny_info http://super.franky.t04.com lan
+
+#Deny badsites to lan
+http_reply_access deny badsites lan
+
+http_access allow USERS AVAILABLE_WORKING
+
+dns_nameservers 10.44.2.2
+
+
+acl multimedia url_regex -i \.png$ \.jpg$
+acl bar proxy_auth luffybelikapalt05
+delay_pools 1
+delay_class 1 1
+delay_parameters 1 1250/3200
+delay_access 1 allow multimedia bar
+delay_access 1 deny ALL
+http_access deny ALL
+
+```
+
+***TESTING***
+
+- Ketika sebagai luffy dan mendownload gambar png atau jpg
+    - Pertama, lakukan proxy terlebih dahulu dengan cara 
+    ```
+    export http_proxy="http://luffybelikapalt05:luffy_t05@jualbelikapal.t05.com:5000"
+    ```
+    - Selanjutnya lakukan wget pada 
+    ```
+    wget http://super.franky.t05.com/public/images/franky.png
+    ```
+    
+    Hasilnya:
+    
+    ![image](https://user-images.githubusercontent.com/61973814/141644987-566f9ece-8da1-43d2-aaed-a70a9661c3b2.png)
+
+- Ketika sebagai Zoro dan mendownload gambar png atau jpg
+   - Pertama, lakukan proxy terlebih dahulu dengan cara
+    
+    ```
+    export http_proxy="http://luffybelikapalt05:luffy_t05@jualbelikapal.t05.com:5000"
+    ```
+    
+    - Selanjutnya lakukan wget pada 
+    ```
+    wget http://super.franky.t05.com/public/images/franky.png
+    ```
+    
+    Hasilnya :
+    
+    ![image](https://user-images.githubusercontent.com/61973814/141645161-46a8d9b5-894d-41cb-b6b9-5aca48f0e95a.png)
+
